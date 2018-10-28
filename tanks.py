@@ -3,7 +3,7 @@
 """
 Created on Thu Oct 18 19:18:02 2018
 
-@author: gershow
+@author: Xinle Xiong
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -44,7 +44,13 @@ def trajectory (x0,y0,v,theta,g = 9.8, npts = 1000):
     0.5g t^2 - vsin(theta) t - y0 = 0
     t_final = v/g sin(theta) + sqrt((v/g)^2 sin^2(theta) + 2 y0/g)
     """
-  
+    
+    t_final = (v/g)*np.sin(theta) + np.sqrt(((v/g)**2)*((np.sin(theta))**2) + 2*y0/g)
+    time = np.linspace(0, t_final, num=npts)
+    trajy = y0 + v*np.sin(theta)*time - 0.5*g*(time**2)
+    trajx = x0 + v*np.cos(theta)*time
+    return (trajx, trajy)
+    
 
 def firstInBox (x,y,box):
     """
@@ -66,7 +72,11 @@ def firstInBox (x,y,box):
         -1 if the line x,y does not go through the box
     """
 
-
+    for j in range(0, len(x)):
+        if box[0] <= x[j] <= box[1] and box[2] <= y[j] <= box[3]:
+            return j
+        else:
+            return -1
     
 
 def tankShot (targetBox, obstacleBox, x0, y0, v, theta, g = 9.8):
@@ -97,7 +107,15 @@ def tankShot (targetBox, obstacleBox, x0, y0, v, theta, g = 9.8):
     draws the truncated trajectory in current plot window
     """
     
-
+    x, y = trajectory(x0, y0, v, theta)
+    x, y = endTrajectoryAtIntersection(x, y, targetBox)
+    plt.plot(x, y)
+    wins = firstInBox(x, y, targetBox)
+    if wins <= 0:
+        return 0
+    else:
+        return 1
+    
 
 def drawBoard (tank1box, tank2box, obstacleBox, playerNum):
     """
@@ -114,8 +132,14 @@ def drawBoard (tank1box, tank2box, obstacleBox, playerNum):
         1 or 2 -- who's turn it is to shoot
  
     """    
-    #your code here
-    
+    plt.clf();
+    drawBox(tank1box, tank1Color)
+    drawBox(tank2box, tank2Color)
+    drawBox(obstacleBox, obstacleColor)
+    if playerNum == 1:
+        plt.title("Player 1 Turn")
+    else:
+        plt.title("Player 2 Turn")
     showWindow() #this makes the figure window show up
 
 def oneTurn (tank1box, tank2box, obstacleBox, playerNum, g = 9.8):   
@@ -143,8 +167,21 @@ def oneTurn (tank1box, tank2box, obstacleBox, playerNum, g = 9.8):
     displays trajectory (shot originates from center of tank)
     returns 0 for miss, 1 or 2 for victory
     """        
-
-    
+    drawBoard(tank1box, tank2box, obstacleBox, playerNum)
+    if playerNum == 1:
+        v = getNumberInput("Player 1 enter velocity: ")
+        theta = 180*getNumberInput("Player 1 enter angle (in degrees): ")/np.pi
+        x0 = tank1box[1]
+        y0 = tank1box[3]
+        result = tankShot(tank2box, obstacleBox, x0, y0, v, theta)
+        return result
+    else:
+        v = getNumberInput("Player 2 enter velocity: ")
+        theta = 180*getNumberInput("Player 2 enter angle (in degrees): ")/np.pi
+        x0= tank2box[1]
+        y0 = tank2box[3]
+        result = tankShot(tank1box, obstacleBox, x0, y0, v, theta)
+        return result
 
 def playGame(tank1box, tank2box, obstacleBox, g = 9.8):
     """
@@ -162,6 +199,21 @@ def playGame(tank1box, tank2box, obstacleBox, g = 9.8):
         accel due to gravity (default 9.8)
     """
     
+    playerNum = 1
+    wins = 0
+    while wins == 0:
+        wins = oneTurn(tank1box, tank2box, obstacleBox, playerNum)
+        if wins == 0:
+            print("Better luck next time!")
+            if playerNum == 1:
+                playerNum = 2
+            else:
+                playerNum = 1
+        else:
+            print("Congratulations Player", playerNum, "you have destroyed the enemy!")
+            break
+    input("Continue>")
+    plt.clf();
     
         
 ##### functions provided to you #####
@@ -200,6 +252,7 @@ def showWindow():
     shows the window -- call at end of drawBoard and tankShot
     """
     plt.draw()
+    plt.axis([0,100, 0, 100])
     plt.pause(0.001)
     plt.show()
 
