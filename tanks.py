@@ -108,13 +108,9 @@ def tankShot (targetBox, obstacleBox, x0, y0, v, theta, g = 9.8):
     """
     
     x, y = trajectory(x0, y0, v, theta)
-    x, y = endTrajectoryAtIntersection(x, y, targetBox)
-    plt.plot(x, y)
-    wins = firstInBox(x, y, targetBox)
-    if wins <= 0:
-        return 0
-    else:
-        return 1
+    x, y = endTrajectoryAtIntersection(x, y, obstacleBox) #FIXED -- corrected box
+    plt.plot(x, y, lineWidth = 2) #FIXED -- corrected graph and return code
+    return(firstInBox(x,y,targetBox) >=0) 
     
 
 def drawBoard (tank1box, tank2box, obstacleBox, playerNum):
@@ -170,18 +166,26 @@ def oneTurn (tank1box, tank2box, obstacleBox, playerNum, g = 9.8):
     drawBoard(tank1box, tank2box, obstacleBox, playerNum)
     if playerNum == 1:
         v = getNumberInput("Player 1 enter velocity: ")
-        theta = 180*getNumberInput("Player 1 enter angle (in degrees): ")/np.pi
-        x0 = tank1box[1]
-        y0 = tank1box[3]
-        result = tankShot(tank2box, obstacleBox, x0, y0, v, theta)
-        return result
+        theta = np.pi*getNumberInput("Player 1 enter angle (in degrees): ")/180 #FIXED -- theta
+        x0 = 0.5*(tank1box[1]+tank1box[0]) #FIXED -- x0 and y0
+        y0 = 0.5*(tank1box[3]+tank1box[2])
+        result = tankShot(tank2box, obstacleBox, x0, y0, v, theta) #FIXED -- reorganized code within modules
+        showWindow();
+        if (result):
+            return playerNum
+        else:
+            return 0
     else:
         v = getNumberInput("Player 2 enter velocity: ")
-        theta = 180*getNumberInput("Player 2 enter angle (in degrees): ")/np.pi
-        x0= tank2box[1]
-        y0 = tank2box[3]
+        theta = np.pi*getNumberInput("Player 2 enter angle (in degrees): ")/180
+        x0= 0.5*(tank2box[1]+tank2box[0])
+        y0 = 0.5*(tank2box[3]+tank2box[2])
         result = tankShot(tank1box, obstacleBox, x0, y0, v, theta)
-        return result
+        showWindow();
+        if (result):
+            return playerNum
+        else:
+            return 0
 
 def playGame(tank1box, tank2box, obstacleBox, g = 9.8):
     """
@@ -199,21 +203,18 @@ def playGame(tank1box, tank2box, obstacleBox, g = 9.8):
         accel due to gravity (default 9.8)
     """
     
-    playerNum = 1
-    wins = 0
-    while wins == 0:
+    playerNum = 1 #FIXED -- winning system
+    while True:
         wins = oneTurn(tank1box, tank2box, obstacleBox, playerNum)
-        if wins == 0:
-            print("Better luck next time!")
-            if playerNum == 1:
-                playerNum = 2
-            else:
-                playerNum = 1
-        else:
-            print("Congratulations Player", playerNum, "you have destroyed the enemy!")
+        if (wins):
             break
-    input("Continue>")
-    plt.clf();
+        print("Better luck next time!")
+        input("Hit enter to continue>") #FIXED -- stopped the game from automatically progressing
+        if playerNum == 1:
+            playerNum = 2
+        else:
+            playerNum = 1
+    print("Congratulations Player", playerNum, "you have destroyed the enemy!")
     
         
 ##### functions provided to you #####
